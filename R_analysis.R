@@ -1,7 +1,8 @@
 if(!file.exists('dataset.zip')){
   download.file("https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip",'dataset.zip')
+  unzip('dataset.zip')
 }
-unzip('dataset.zip')
+
 
 X_test <- read.table("UCI HAR DataSet/test/X_test.txt")
 Y_test <- read.table("UCI HAR DataSet/test/y_test.txt")
@@ -22,12 +23,13 @@ total_dataset <- rbind(test_dataset,train_dataset)
 colnames(total_dataset) <- c("Subject" , features$V2 , "Activity")
 total_dataset$Activity <- factor(total_dataset$Activity,labels=activity$V2)
 
-library(stringr)
 
-detectmean <- colnames(total_dataset)[str_detect(colnames(total_dataset),'([mean()|std()])')]
-MeanStd <- select(total_dataset , detectmean)
+detectmean <- grep('-mean\\(\\)|-std\\(\\)',colnames(total_dataset))
+MeanStd <- select(total_dataset , "Subject", detectmean, "Activity")
 library(reshape2)
-
+colnames(MeanStd) <- gsub("-mean","Mean",colnames(MeanStd))
+colnames(MeanStd) <- gsub("-std","Std",colnames(MeanStd))
+colnames(MeanStd) <- gsub("[-()]","",colnames(MeanStd))
 meltedData <- melt(MeanStd , id.vars = c("Subject","Activity"))
 casted <- dcast(meltedData,Subject+Activity ~ variable,fun.aggregate = mean)
 write.table(casted,'final.txt')
